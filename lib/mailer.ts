@@ -11,7 +11,7 @@ function getTransporter() {
 
   if (!user || !pass) {
     throw new Error(
-      "Missing GMAIL_USER / GMAIL_APP_PASSWORD env vars. See .env.example."
+      "Missing GMAIL_USER / GMAIL_APP_PASSWORD env vars. See .env.example.",
     );
   }
 
@@ -24,12 +24,14 @@ function getTransporter() {
 export async function sendPdfToUser(name: string, toEmail: string) {
   const transporter = getTransporter();
 
-  const relativePdfPath = process.env.PDF_FILE_PATH || "public/documents/dummy.pdf";
+  const relativePdfPath =
+    process.env.PDF_FILE_PATH ||
+    "public/documents/PostgreSQL_SQL_Zero_to_Mastery.pdf";
   const absolutePdfPath = path.join(process.cwd(), relativePdfPath);
 
   if (!fs.existsSync(absolutePdfPath)) {
     throw new Error(
-      `PDF not found at ${absolutePdfPath}. Place a file there or update PDF_FILE_PATH.`
+      `PDF not found at ${absolutePdfPath}. Place a file there or update PDF_FILE_PATH.`,
     );
   }
 
