@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: #0b1220;
+}
+
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  background: radial-gradient(120% 120% at 50% 0%, #141e33 0%, #0b1220 55%, #070b14 100%);
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob {
+    animation: none !important;
+  }
+}
