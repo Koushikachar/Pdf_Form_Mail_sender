@@ -1,39 +1,49 @@
 import nodemailer from "nodemailer";
-import fs from "fs";
-import path from "path";
 
-// Free mail sender using Gmail SMTP (works with any Gmail account + an
-// "app password"). Swap this transport out later for Resend/SendGrid/etc.
-// if you outgrow Gmail's sending limits — the rest of the app doesn't change.
 function getTransporter() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
 
   if (!user || !pass) {
     throw new Error(
-      "Missing GMAIL_USER / GMAIL_APP_PASSWORD env vars. See .env.example.",
+      "Missing GMAIL_USER or GMAIL_APP_PASSWORD environment variables.",
     );
   }
 
   return nodemailer.createTransport({
     service: "gmail",
-    auth: { user, pass },
+    auth: {
+      user,
+      pass,
+    },
   });
 }
 
 export async function sendPdfToUser(name: string, toEmail: string) {
   const transporter = getTransporter();
 
-  const relativePdfPath =
-    process.env.PDF_FILE_PATH ||
-    "public/documents/PostgreSQL_SQL_Zero_to_Mastery.pdf";
-  const absolutePdfPath = path.join(process.cwd(), relativePdfPath);
+  // Your PDF is inside:
+  // public/documents/PostgreSQL_SQL_Zero_to_Mastery.pdf
 
-  if (!fs.existsSync(absolutePdfPath)) {
+  const pdfUrl =
+    process.env.PDF_URL ||
+    `${process.env.APP_URL}/documents/PostgreSQL_SQL_Zero_to_Mastery.pdf`;
+
+  if (!pdfUrl) {
+    throw new Error("PDF_URL or APP_URL is missing.");
+  }
+
+  console.log("Fetching PDF from:", pdfUrl);
+
+  const response = await fetch(pdfUrl);
+
+  if (!response.ok) {
     throw new Error(
-      `PDF not found at ${absolutePdfPath}. Place a file there or update PDF_FILE_PATH.`,
+      `Could not fetch PDF. HTTP ${response.status} from ${pdfUrl}`,
     );
   }
+
+  const pdfBuffer = Buffer.from(await response.arrayBuffer());
 
   const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER;
 
@@ -42,12 +52,30 @@ export async function sendPdfToUser(name: string, toEmail: string) {
     to: toEmail,
     replyTo: adminEmail,
     subject: "Here is your PDF",
-    text: `Hi ${name},\n\nThanks for filling out the form. Please find your PDF attached.\n\nBest,\nTeam`,
-    html: `<p>Hi ${name},</p><p>Thanks for filling out the form. Please find your PDF attached.</p><p>Best,<br/>Team</p>`,
+
+    text: `Hi ${name},
+
+Thanks for filling out the form.
+
+Please find your PDF attached.
+
+Best,
+Team`,
+
+    html: `
+      <p>Hi ${name},</p>
+      <p>
+        Thanks for filling out the form.
+        Please find your PDF attached.
+      </p>
+      <p>Best,<br>Team</p>
+    `,
+
     attachments: [
       {
-        filename: path.basename(absolutePdfPath),
-        path: absolutePdfPath,
+        filename: "PostgreSQL_SQL_Zero_to_Mastery.pdf",
+        content: pdfBuffer,
+        contentType: "application/pdf",
       },
     ],
   });
